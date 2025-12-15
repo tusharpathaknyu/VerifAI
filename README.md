@@ -1,197 +1,321 @@
 # VerifAI 🚀
 
-**AI-Powered UVM Testbench Generator**
+<div align="center">
 
-> Transform natural language specifications into production-ready UVM verification environments in seconds.
+![VerifAI Banner](https://img.shields.io/badge/VerifAI-AI%20Powered%20UVM-blueviolet?style=for-the-badge)
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.9+-green.svg)
-![UVM](https://img.shields.io/badge/UVM-1.2-orange.svg)
+**🤖 Transform Natural Language → Production-Ready UVM Testbenches**
 
-## 🎯 What is VerifAI?
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg?style=flat-square&logo=python)](https://python.org)
+[![UVM 1.2](https://img.shields.io/badge/UVM-1.2%20Compatible-orange.svg?style=flat-square)](https://www.accellera.org/downloads/standards/uvm)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-VerifAI is an AI-powered tool that generates complete UVM (Universal Verification Methodology) testbench environments from natural language descriptions. Stop writing boilerplate code—describe what you want, and let AI do the heavy lifting.
+[Features](#-features) • [Quick Start](#-quick-start) • [Examples](#-examples) • [Roadmap](#-roadmap) • [Contributing](#-contributing)
 
-### Example
+</div>
 
-**Input:**
+---
+
+## 🎬 Demo
+
 ```
-Create a UVM testbench for an APB slave with 4 registers:
-- STATUS register at 0x00 (read-only)
-- CONTROL register at 0x04 (read-write)  
-- DATA register at 0x08 (read-write)
-- CONFIG register at 0x0C (read-write)
+📝 Input: "Create a UVM testbench for an APB slave memory controller with 
+          STATUS, CONTROL, DATA, and CONFIG registers"
+
+🚀 VerifAI generates in ~5 seconds:
+   ├── apb_pkg.sv           (Package with imports)
+   ├── apb_interface.sv     (Bus interface)
+   ├── apb_seq_item.sv      (Transaction class)
+   ├── apb_driver.sv        (Stimulus driver)
+   ├── apb_monitor.sv       (Protocol monitor)
+   ├── apb_sequencer.sv     (Sequence controller)
+   ├── apb_agent.sv         (UVM agent)
+   ├── apb_sequence_lib.sv  (Test sequences)
+   ├── apb_scoreboard.sv    (Checker)
+   ├── apb_coverage.sv      (Functional coverage)
+   ├── apb_env.sv           (Environment)
+   ├── apb_base_test.sv     (Base test)
+   └── apb_top_tb.sv        (Top testbench)
 ```
 
-**Output:** Complete UVM environment with:
-- ✅ APB Agent (driver, monitor, sequencer)
-- ✅ Scoreboard with protocol checking
-- ✅ Functional coverage model
-- ✅ Sequence library
-- ✅ Register model (UVM RAL)
-- ✅ Top-level testbench
+## 🌟 Why VerifAI?
+
+| Traditional Approach | With VerifAI |
+|---------------------|--------------|
+| ⏰ Days of boilerplate coding | ⚡ **5 seconds** generation |
+| 🐛 Copy-paste errors | ✅ Consistent, tested templates |
+| 📚 Reference manual lookup | 🤖 AI understands your intent |
+| 🔄 Repetitive protocol code | 🎯 Focus on verification strategy |
 
 ## ✨ Features
 
-- 🤖 **AI-Powered Generation** - Uses LLM to understand specs
-- 📦 **Protocol Support** - APB, AXI4-Lite (more coming)
-- 🎯 **Best Practices** - Generated code follows UVM methodology
-- ⚡ **Instant Results** - Seconds, not days
-- 🔧 **Customizable** - Template-based architecture
-- 🆓 **Free Option** - Works with local LLMs (Ollama)
+### 🤖 AI-Powered Understanding
+- Natural language specification parsing
+- Intelligent protocol detection
+- Context-aware code generation
+
+### 📦 Protocol Support
+| Protocol | Status | Features |
+|----------|--------|----------|
+| **APB** | ✅ Ready | Full APB3/APB4 support |
+| **AXI4-Lite** | ✅ Ready | Read/Write channels |
+| AXI4 Full | 🔜 Coming | Burst, ID support |
+| UART | 🔜 Coming | TX/RX verification |
+| SPI | 📋 Planned | Master/Slave modes |
+
+### 🔌 Multiple LLM Backends
+```
+┌─────────────┬────────────┬───────────────┐
+│   Provider  │    Cost    │    Quality    │
+├─────────────┼────────────┼───────────────┤
+│ Google Gemini │   Free*   │  ⭐⭐⭐⭐     │
+│ OpenAI GPT-4  │   Paid    │  ⭐⭐⭐⭐⭐   │
+│ Anthropic     │   Paid    │  ⭐⭐⭐⭐⭐   │
+│ Ollama Local  │   Free    │  ⭐⭐⭐       │
+└─────────────┴────────────┴───────────────┘
+* Free tier available
+```
+
+### 🎯 Generated Code Quality
+- ✅ UVM 1.2 / IEEE 1800.2 compliant
+- ✅ Follows industry best practices
+- ✅ Synthesizable interface definitions
+- ✅ Complete functional coverage models
+- ✅ Protocol-aware scoreboards
+- ✅ Ready-to-run test sequences
+
+---
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/VerifAI.git
+# Clone
+git clone https://github.com/tusharpathaknyu/VerifAI.git
 cd VerifAI
 
 # Install dependencies
 pip install -r requirements.txt
 
-# (Optional) Set up OpenAI API key for GPT
-export OPENAI_API_KEY="your-key-here"
+# Set up API key (choose one)
+export GOOGLE_API_KEY="your-gemini-key"    # Recommended (free tier)
+# OR
+export OPENAI_API_KEY="your-openai-key"
+# OR use Ollama for fully local operation
 ```
 
-### Usage
+### Basic Usage
 
 ```bash
-# Interactive mode
-python verifai.py
+# 🎯 Quick generate (uses Gemini by default)
+python verifai.py --spec "APB slave with 4 control registers" --llm gemini
 
-# CLI mode
-python verifai.py --spec "APB slave with 4 registers" --protocol apb --output ./output
+# 📁 Output to specific directory
+python verifai.py --spec "AXI4-Lite memory controller" --output ./my_tb
 
-# From specification file
-python verifai.py --spec-file my_spec.txt --protocol axi4lite
+# 🤖 Use different LLM
+python verifai.py --spec "UART transmitter" --llm openai
+
+# 💻 Fully local with Ollama (no API key needed)
+python verifai.py --spec "SPI master" --llm ollama
 ```
+
+---
+
+## 📚 Examples
+
+### Example 1: APB Register Block
+
+**Specification:**
+```
+Create a UVM testbench for an APB slave with:
+- STATUS register at 0x00 (read-only, shows busy/done flags)
+- CONTROL register at 0x04 (read-write, start/stop commands)
+- DATA_IN register at 0x08 (write-only, 32-bit data input)
+- DATA_OUT register at 0x0C (read-only, 32-bit result)
+```
+
+**Generated Coverage (excerpt):**
+```systemverilog
+covergroup apb_cov;
+    // Address coverage
+    addr_cp: coverpoint item.addr {
+        bins status  = {32'h00};
+        bins control = {32'h04};
+        bins data_in = {32'h08};
+        bins data_out = {32'h0C};
+    }
+    
+    // Operation coverage
+    operation_cp: coverpoint item.write {
+        bins read  = {0};
+        bins write = {1};
+    }
+    
+    // Cross coverage
+    addr_x_op: cross addr_cp, operation_cp;
+endgroup
+```
+
+### Example 2: AXI4-Lite Memory
+
+**Specification:**
+```
+AXI4-Lite memory controller testbench:
+- 1KB address space
+- 32-bit data width
+- Verify read-after-write coherency
+```
+
+**Generated Scoreboard (excerpt):**
+```systemverilog
+class axi4lite_scoreboard extends uvm_scoreboard;
+    // Reference memory model
+    bit [31:0] mem [bit[31:0]];
+    
+    function void write(axi4lite_seq_item item);
+        if (item.write) begin
+            mem[item.addr] = item.data;
+            `uvm_info("SCB", $sformatf("WRITE: addr=0x%08h data=0x%08h", 
+                      item.addr, item.data), UVM_MEDIUM)
+        end else begin
+            if (mem.exists(item.addr)) begin
+                if (item.data !== mem[item.addr])
+                    `uvm_error("SCB", $sformatf("MISMATCH: addr=0x%08h exp=0x%08h got=0x%08h",
+                              item.addr, mem[item.addr], item.data))
+            end
+        end
+    endfunction
+endclass
+```
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     User Specification                       │
+│         "APB slave with STATUS and CONTROL registers"        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      🤖 LLM Parser                           │
+│    ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│    │  Gemini  │  │  GPT-4   │  │ Claude   │  │  Ollama  │   │
+│    └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Structured Config                         │
+│    { protocol: "apb", registers: [...], features: [...] }    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   📝 Jinja2 Templates                        │
+│    ┌────────────────────────────────────────────────────────┐   │
+│    │  templates/apb/  │  templates/axi4lite/  │  ...    │   │
+│    └────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  🎯 Generated UVM Testbench                  │
+│   agent • driver • monitor • scoreboard • coverage • test   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ## 📁 Project Structure
 
 ```
 VerifAI/
-├── verifai.py              # Main entry point
-├── requirements.txt        # Python dependencies
-├── README.md
+├── 📄 verifai.py              # CLI entry point
+├── 📄 requirements.txt        # Dependencies
+├── 📄 README.md               # This file
+├── 📄 ROADMAP.md              # Development roadmap
 │
-├── src/
-│   ├── __init__.py
-│   ├── parser.py           # Natural language parser
-│   ├── generator.py        # Code generator engine
-│   ├── llm_client.py       # LLM API client
-│   └── protocols/          # Protocol definitions
-│       ├── __init__.py
-│       ├── apb.py
-│       └── axi4lite.py
+├── 📁 src/
+│   ├── parser.py              # NL → Structured spec
+│   ├── generator.py           # Spec → UVM code
+│   ├── llm_client.py          # Multi-LLM support
+│   └── 📁 protocols/
+│       ├── apb.py             # APB configuration
+│       └── axi4lite.py        # AXI4-Lite configuration
 │
-├── templates/              # UVM code templates (Jinja2)
-│   ├── common/
-│   │   ├── interface.sv.j2
-│   │   ├── package.sv.j2
-│   │   └── top_tb.sv.j2
-│   ├── apb/
-│   │   ├── apb_agent.sv.j2
-│   │   ├── apb_driver.sv.j2
-│   │   ├── apb_monitor.sv.j2
-│   │   ├── apb_sequencer.sv.j2
-│   │   ├── apb_seq_item.sv.j2
-│   │   ├── apb_sequence_lib.sv.j2
-│   │   ├── apb_scoreboard.sv.j2
-│   │   ├── apb_coverage.sv.j2
-│   │   ├── apb_env.sv.j2
-│   │   └── apb_interface.sv.j2
-│   └── axi4lite/
-│       └── ... (similar structure)
+├── 📁 templates/              # Jinja2 templates
+│   ├── 📁 apb/                # 13 APB templates
+│   └── 📁 axi4lite/           # 13 AXI4-Lite templates
 │
-├── examples/               # Example DUTs and generated outputs
-│   ├── apb_register_block/
-│   └── axi4lite_gpio/
+├── 📁 examples/
+│   └── 📁 apb_slave/          # Example DUT
 │
-└── tests/                  # Unit tests
-    └── test_generator.py
+└── 📁 tests/                  # Unit tests (coming soon)
 ```
-
-## 🔧 Supported Protocols
-
-| Protocol | Status | Features |
-|----------|--------|----------|
-| APB | ✅ Ready | Full agent, coverage, scoreboard |
-| AXI4-Lite | ✅ Ready | Read/write channels, response checking |
-| AXI4 | 🚧 Planned | Full AXI4 with bursts |
-| AHB | 🚧 Planned | AHB-Lite support |
-
-## 🤖 LLM Options
-
-VerifAI supports multiple LLM backends:
-
-| Provider | Cost | Setup |
-|----------|------|-------|
-| **Ollama (Local)** | Free | `ollama pull llama3.2` |
-| **OpenAI GPT-4o-mini** | ~$0.01/generation | Set `OPENAI_API_KEY` |
-| **Anthropic Claude** | ~$0.01/generation | Set `ANTHROPIC_API_KEY` |
-
-## 📊 Demo
-
-```
-$ python verifai.py
-
-╔═══════════════════════════════════════════════════════════╗
-║                    🚀 VerifAI v1.0                        ║
-║          AI-Powered UVM Testbench Generator               ║
-╚═══════════════════════════════════════════════════════════╝
-
-Enter your specification (or 'help' for examples):
-> Create APB testbench for a register block with STATUS (0x00, RO), 
-  CONTROL (0x04, RW), DATA (0x08, RW), CONFIG (0x0C, RW)
-
-🔄 Parsing specification...
-🤖 Generating UVM components...
-📁 Writing files...
-
-✅ Generated 12 files in ./output/apb_register_block/
-
-Files created:
-  ├── apb_pkg.sv
-  ├── apb_interface.sv
-  ├── apb_seq_item.sv
-  ├── apb_driver.sv
-  ├── apb_monitor.sv
-  ├── apb_sequencer.sv
-  ├── apb_agent.sv
-  ├── apb_scoreboard.sv
-  ├── apb_coverage.sv
-  ├── apb_env.sv
-  ├── apb_base_test.sv
-  └── top_tb.sv
-
-Run simulation: cd output/apb_register_block && make sim
-```
-
-## 🎓 Learning Resources
-
-- [UVM Cookbook](https://verificationacademy.com/cookbook/uvm)
-- [AMBA APB Protocol Spec](https://developer.arm.com/documentation/ihi0024/latest)
-- [AMBA AXI4-Lite Protocol Spec](https://developer.arm.com/documentation/ihi0022/latest)
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) first.
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🙏 Acknowledgments
-
-- UVM-1.2 Class Reference
-- ARM AMBA Protocol Specifications
-- The verification community
 
 ---
 
-**Built with ❤️ for the verification community**
+## 🗺️ Roadmap
 
-*Star ⭐ this repo if you find it useful!*
+See [ROADMAP.md](ROADMAP.md) for detailed plans.
+
+### Coming Soon
+- [ ] 🧪 Comprehensive test suite
+- [ ] 🌐 Web UI with Streamlit
+- [ ] 📡 More protocols (AXI4, UART, SPI)
+- [ ] 🔍 Auto-DUT analysis from RTL
+- [ ] 📊 Coverage closure AI suggestions
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Areas where help is needed:
+
+1. **Protocol Templates** - Add support for more bus protocols
+2. **Test Cases** - Unit tests and integration tests
+3. **Documentation** - Examples and tutorials
+4. **LLM Prompts** - Improve parsing accuracy
+
+```bash
+# Fork & clone
+git clone https://github.com/YOUR_USERNAME/VerifAI.git
+
+# Create branch
+git checkout -b feature/amazing-feature
+
+# Make changes & test
+python verifai.py --spec "test spec" --llm mock
+
+# Submit PR
+```
+
+---
+
+## 📜 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- UVM methodology by Accellera
+- Inspired by the verification community
+- Built with ❤️ for DV engineers
+
+---
+
+<div align="center">
+
+**⭐ Star this repo if VerifAI saves you time!**
+
+Made with 🤖 + ☕ by [Tushar Pathak](https://github.com/tusharpathaknyu)
+
+</div>
