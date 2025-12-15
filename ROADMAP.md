@@ -39,7 +39,7 @@
 ### 3.1 More Protocols
 - [ ] AXI4 Full (burst transactions)
 - [x] UART protocol ✅
-- [ ] SPI protocol
+- [x] SPI protocol ✅ (NEW!)
 - [ ] I2C protocol
 - [ ] Wishbone protocol
 

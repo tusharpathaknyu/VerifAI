@@ -211,6 +211,22 @@ class MockLLMClient(BaseLLMClient):
                 }),
                 model="mock"
             )
+        elif "spi" in prompt_lower or "serial peripheral" in prompt_lower:
+            return LLMResponse(
+                content=json.dumps({
+                    "protocol": "spi",
+                    "module_name": "spi_controller",
+                    "data_width": 8,
+                    "spi_mode": 0,
+                    "spi_num_slaves": 1,
+                    "spi_msb_first": True,
+                    "spi_clock_divider": 2,
+                    "spi_supports_qspi": False,
+                    "registers": [],
+                    "features": ["scoreboard", "coverage", "sequences"]
+                }),
+                model="mock"
+            )
         elif "axi" in prompt_lower:
             return LLMResponse(
                 content=json.dumps({

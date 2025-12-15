@@ -61,8 +61,8 @@
 | **APB** | ✅ Ready | Full APB3/APB4 support |
 | **AXI4-Lite** | ✅ Ready | Read/Write channels |
 | **UART** | ✅ Ready | TX/RX, baud rates, parity, error injection |
+| **SPI** | ✅ Ready | All 4 modes, multi-slave, QSPI support |
 | AXI4 Full | 🔜 Coming | Burst, ID support |
-| SPI | 📋 Planned | Master/Slave modes |
 | I2C | 📋 Planned | Multi-master support |
 
 ### 🔌 Multiple LLM Backends

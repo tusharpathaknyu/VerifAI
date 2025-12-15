@@ -181,6 +181,15 @@ class UVMGenerator:
             "fifo_depth": spec.fifo_depth,
             "bit_period_ns": int(1e9 / spec.baud_rate),
             "frame_bits": spec.data_bits + 1 + (1 if spec.parity != 'none' else 0) + int(spec.stop_bits),
+            
+            # SPI-specific
+            "spi_mode": spec.spi_mode,
+            "spi_num_slaves": spec.spi_num_slaves,
+            "spi_msb_first": spec.spi_msb_first,
+            "spi_clock_divider": spec.spi_clock_divider,
+            "spi_cs_setup_time": spec.spi_cs_setup_time,
+            "spi_cs_hold_time": spec.spi_cs_hold_time,
+            "spi_supports_qspi": spec.spi_supports_qspi,
         }
     
     def _get_protocol_templates(self, protocol: str) -> List[Dict[str, str]]:
@@ -235,6 +244,23 @@ class UVMGenerator:
                 {"template": "uart/uart_env.sv.j2", "output": "{prefix}_env.sv", "category": "env"},
                 {"template": "uart/uart_base_test.sv.j2", "output": "{prefix}_base_test.sv", "category": "test"},
                 {"template": "uart/uart_top_tb.sv.j2", "output": "top_tb.sv", "category": "top"},
+            ]
+        
+        elif protocol == "spi":
+            return [
+                {"template": "spi/spi_pkg.sv.j2", "output": "{prefix}_pkg.sv", "category": "package"},
+                {"template": "spi/spi_interface.sv.j2", "output": "{prefix}_if.sv", "category": "interface"},
+                {"template": "spi/spi_seq_item.sv.j2", "output": "{prefix}_seq_item.sv", "category": "agent"},
+                {"template": "spi/spi_driver.sv.j2", "output": "{prefix}_driver.sv", "category": "agent"},
+                {"template": "spi/spi_monitor.sv.j2", "output": "{prefix}_monitor.sv", "category": "agent"},
+                {"template": "spi/spi_sequencer.sv.j2", "output": "{prefix}_sequencer.sv", "category": "agent"},
+                {"template": "spi/spi_agent.sv.j2", "output": "{prefix}_agent.sv", "category": "agent"},
+                {"template": "spi/spi_sequence_lib.sv.j2", "output": "{prefix}_seq_lib.sv", "category": "sequence"},
+                {"template": "spi/spi_scoreboard.sv.j2", "output": "{prefix}_scoreboard.sv", "category": "scoreboard"},
+                {"template": "spi/spi_coverage.sv.j2", "output": "{prefix}_coverage.sv", "category": "coverage"},
+                {"template": "spi/spi_env.sv.j2", "output": "{prefix}_env.sv", "category": "env"},
+                {"template": "spi/spi_base_test.sv.j2", "output": "{prefix}_base_test.sv", "category": "test"},
+                {"template": "spi/spi_top_tb.sv.j2", "output": "top_tb.sv", "category": "top"},
             ]
         
         else:

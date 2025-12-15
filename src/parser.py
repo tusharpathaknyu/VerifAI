@@ -58,6 +58,15 @@ class ParsedSpec:
     has_tx_fifo: bool = True
     has_rx_fifo: bool = True
     fifo_depth: int = 16
+    
+    # SPI-specific options
+    spi_mode: int = 0  # 0-3 (CPOL/CPHA combinations)
+    spi_num_slaves: int = 1
+    spi_msb_first: bool = True
+    spi_clock_divider: int = 2
+    spi_cs_setup_time: int = 1
+    spi_cs_hold_time: int = 1
+    spi_supports_qspi: bool = False
 
 
 SYSTEM_PROMPT = """You are an expert hardware verification engineer specializing in UVM (Universal Verification Methodology) and AMBA protocols.
@@ -91,7 +100,14 @@ You must respond with ONLY a valid JSON object (no markdown, no explanation) wit
     "parity": "none" or "even" or "odd" or "mark" or "space",
     "has_rts_cts": false (hardware flow control),
     "has_fifo": true (TX/RX FIFO),
-    "fifo_depth": 16
+    "fifo_depth": 16,
+    
+    // SPI-specific fields (only if protocol is "spi"):
+    "spi_mode": 0 (0, 1, 2, or 3 - CPOL/CPHA combinations),
+    "spi_num_slaves": 1 (number of slave devices),
+    "spi_msb_first": true (MSB or LSB first transmission),
+    "spi_clock_divider": 2 (system clock to SPI clock divider),
+    "spi_supports_qspi": false (Quad SPI support)
 }
 
 Rules:
@@ -213,6 +229,14 @@ class SpecParser:
             has_tx_fifo=data.get("has_tx_fifo", True),
             has_rx_fifo=data.get("has_rx_fifo", True),
             fifo_depth=data.get("fifo_depth", 16),
+            # SPI-specific
+            spi_mode=data.get("spi_mode", 0),
+            spi_num_slaves=data.get("spi_num_slaves", 1),
+            spi_msb_first=data.get("spi_msb_first", True),
+            spi_clock_divider=data.get("spi_clock_divider", 2),
+            spi_cs_setup_time=data.get("spi_cs_setup_time", 1),
+            spi_cs_hold_time=data.get("spi_cs_hold_time", 1),
+            spi_supports_qspi=data.get("spi_supports_qspi", False),
         )
     
     def parse_quick(self, user_spec: str) -> ParsedSpec:
@@ -233,11 +257,12 @@ class SpecParser:
             spec.protocol = "axi4lite"  # Default to lite
         elif "ahb" in spec_lower:
             spec.protocol = "ahb"
-        elif "uart" in spec_lower or "serial" in spec_lower:
+        elif "uart" in spec_lower or "serial" in spec_lower or "rs232" in spec_lower:
             spec.protocol = "uart"
             spec.data_width = 8  # UART is typically 8-bit
-        elif "spi" in spec_lower:
+        elif "spi" in spec_lower or "serial peripheral" in spec_lower:
             spec.protocol = "spi"
+            spec.data_width = 8  # SPI is typically 8-bit
         elif "i2c" in spec_lower or "iic" in spec_lower:
             spec.protocol = "i2c"
         else:
