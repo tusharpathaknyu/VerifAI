@@ -48,6 +48,16 @@ class ParsedSpec:
     axi_id_width: int = 4
     axi_outstanding: int = 4
     apb_version: int = 3  # APB3 or APB4
+    
+    # UART-specific options
+    baud_rate: int = 115200
+    data_bits: int = 8
+    stop_bits: float = 1
+    parity: str = "none"
+    has_rts_cts: bool = False
+    has_tx_fifo: bool = True
+    has_rx_fifo: bool = True
+    fifo_depth: int = 16
 
 
 SYSTEM_PROMPT = """You are an expert hardware verification engineer specializing in UVM (Universal Verification Methodology) and AMBA protocols.
@@ -56,9 +66,9 @@ Your task is to parse natural language specifications and extract structured inf
 
 You must respond with ONLY a valid JSON object (no markdown, no explanation) with this structure:
 {
-    "protocol": "apb" or "axi4lite" or "axi4" or "ahb",
+    "protocol": "apb" or "axi4lite" or "axi4" or "ahb" or "uart" or "spi" or "i2c",
     "module_name": "string - derived from the spec or default to protocol_dut",
-    "data_width": integer (default 32),
+    "data_width": integer (default 32, for UART default 8),
     "addr_width": integer (default 32),
     "registers": [
         {
@@ -72,17 +82,27 @@ You must respond with ONLY a valid JSON object (no markdown, no explanation) wit
     "features": ["scoreboard", "coverage", "sequences", "ral"],
     "clock_name": "clk" (default),
     "reset_name": "rst_n" (default),
-    "reset_active_low": true (default)
+    "reset_active_low": true (default),
+    
+    // UART-specific fields (only if protocol is "uart"):
+    "baud_rate": 115200 (default),
+    "data_bits": 8 (5, 6, 7, or 8),
+    "stop_bits": 1 (1, 1.5, or 2),
+    "parity": "none" or "even" or "odd" or "mark" or "space",
+    "has_rts_cts": false (hardware flow control),
+    "has_fifo": true (TX/RX FIFO),
+    "fifo_depth": 16
 }
 
 Rules:
-1. Infer the protocol from context (APB for simple registers, AXI for complex/high-performance)
+1. Infer the protocol from context (APB for simple registers, AXI for complex/high-performance, UART for serial)
 2. Parse register addresses from hex (0x00) or decimal
 3. Default access type is RW if not specified
 4. Always include scoreboard, coverage, and sequences in features
 5. Include "ral" in features if registers are specified
 6. Use snake_case for module_name
 7. Use UPPER_CASE for register names
+8. For UART: detect baud rate, parity, data bits from specification
 """
 
 
@@ -170,16 +190,29 @@ class SpecParser:
         if registers and "ral" not in features:
             features.append("ral")
         
+        # Determine protocol and set defaults
+        protocol = data.get("protocol", "apb").lower()
+        data_width = data.get("data_width", 8 if protocol == "uart" else 32)
+        
         return ParsedSpec(
-            protocol=data.get("protocol", "apb").lower(),
+            protocol=protocol,
             module_name=data.get("module_name", "dut"),
-            data_width=data.get("data_width", 32),
+            data_width=data_width,
             addr_width=data.get("addr_width", 32),
             registers=registers,
             features=features,
             clock_name=data.get("clock_name", "clk"),
             reset_name=data.get("reset_name", "rst_n"),
-            reset_active_low=data.get("reset_active_low", True)
+            reset_active_low=data.get("reset_active_low", True),
+            # UART-specific
+            baud_rate=data.get("baud_rate", 115200),
+            data_bits=data.get("data_bits", 8),
+            stop_bits=data.get("stop_bits", 1),
+            parity=data.get("parity", "none"),
+            has_rts_cts=data.get("has_rts_cts", False),
+            has_tx_fifo=data.get("has_tx_fifo", True),
+            has_rx_fifo=data.get("has_rx_fifo", True),
+            fifo_depth=data.get("fifo_depth", 16),
         )
     
     def parse_quick(self, user_spec: str) -> ParsedSpec:
@@ -200,6 +233,13 @@ class SpecParser:
             spec.protocol = "axi4lite"  # Default to lite
         elif "ahb" in spec_lower:
             spec.protocol = "ahb"
+        elif "uart" in spec_lower or "serial" in spec_lower:
+            spec.protocol = "uart"
+            spec.data_width = 8  # UART is typically 8-bit
+        elif "spi" in spec_lower:
+            spec.protocol = "spi"
+        elif "i2c" in spec_lower or "iic" in spec_lower:
+            spec.protocol = "i2c"
         else:
             spec.protocol = "apb"
         

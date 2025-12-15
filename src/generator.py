@@ -169,6 +169,18 @@ class UVMGenerator:
             
             # APB-specific
             "apb_version": spec.apb_version,
+            
+            # UART-specific
+            "baud_rate": spec.baud_rate,
+            "data_bits": spec.data_bits,
+            "stop_bits": spec.stop_bits,
+            "parity": spec.parity,
+            "has_rts_cts": spec.has_rts_cts,
+            "has_tx_fifo": spec.has_tx_fifo,
+            "has_rx_fifo": spec.has_rx_fifo,
+            "fifo_depth": spec.fifo_depth,
+            "bit_period_ns": int(1e9 / spec.baud_rate),
+            "frame_bits": spec.data_bits + 1 + (1 if spec.parity != 'none' else 0) + int(spec.stop_bits),
         }
     
     def _get_protocol_templates(self, protocol: str) -> List[Dict[str, str]]:
@@ -206,6 +218,23 @@ class UVMGenerator:
                 {"template": "axi4lite/axi4lite_env.sv.j2", "output": "{prefix}_env.sv", "category": "env"},
                 {"template": "axi4lite/axi4lite_base_test.sv.j2", "output": "{prefix}_base_test.sv", "category": "test"},
                 {"template": "axi4lite/axi4lite_top_tb.sv.j2", "output": "top_tb.sv", "category": "top"},
+            ]
+        
+        elif protocol == "uart":
+            return [
+                {"template": "uart/uart_pkg.sv.j2", "output": "{prefix}_pkg.sv", "category": "package"},
+                {"template": "uart/uart_interface.sv.j2", "output": "{prefix}_if.sv", "category": "interface"},
+                {"template": "uart/uart_seq_item.sv.j2", "output": "{prefix}_seq_item.sv", "category": "agent"},
+                {"template": "uart/uart_driver.sv.j2", "output": "{prefix}_driver.sv", "category": "agent"},
+                {"template": "uart/uart_monitor.sv.j2", "output": "{prefix}_monitor.sv", "category": "agent"},
+                {"template": "uart/uart_sequencer.sv.j2", "output": "{prefix}_sequencer.sv", "category": "agent"},
+                {"template": "uart/uart_agent.sv.j2", "output": "{prefix}_agent.sv", "category": "agent"},
+                {"template": "uart/uart_sequence_lib.sv.j2", "output": "{prefix}_seq_lib.sv", "category": "sequence"},
+                {"template": "uart/uart_scoreboard.sv.j2", "output": "{prefix}_scoreboard.sv", "category": "scoreboard"},
+                {"template": "uart/uart_coverage.sv.j2", "output": "{prefix}_coverage.sv", "category": "coverage"},
+                {"template": "uart/uart_env.sv.j2", "output": "{prefix}_env.sv", "category": "env"},
+                {"template": "uart/uart_base_test.sv.j2", "output": "{prefix}_base_test.sv", "category": "test"},
+                {"template": "uart/uart_top_tb.sv.j2", "output": "top_tb.sv", "category": "top"},
             ]
         
         else:

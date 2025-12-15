@@ -184,23 +184,67 @@ class MockLLMClient(BaseLLMClient):
         return True
     
     def generate(self, prompt: str, system_prompt: str = "") -> LLMResponse:
-        # Return a mock parsed specification
-        return LLMResponse(
-            content=json.dumps({
-                "protocol": "apb",
-                "module_name": "apb_register_block",
-                "data_width": 32,
-                "addr_width": 8,
-                "registers": [
-                    {"name": "STATUS", "address": "0x00", "access": "RO", "reset_value": "0x0"},
-                    {"name": "CONTROL", "address": "0x04", "access": "RW", "reset_value": "0x0"},
-                    {"name": "DATA", "address": "0x08", "access": "RW", "reset_value": "0x0"},
-                    {"name": "CONFIG", "address": "0x0C", "access": "RW", "reset_value": "0x0"}
-                ],
-                "features": ["scoreboard", "coverage", "sequences"]
-            }),
-            model="mock"
-        )
+        # Detect protocol from prompt
+        prompt_lower = prompt.lower()
+        
+        if "uart" in prompt_lower or "serial" in prompt_lower:
+            return LLMResponse(
+                content=json.dumps({
+                    "protocol": "uart",
+                    "module_name": "uart_dut",
+                    "data_width": 8,
+                    "baud_rate": 115200,
+                    "data_bits": 8,
+                    "stop_bits": 1,
+                    "parity": "none",
+                    "has_rts_cts": False,
+                    "has_tx_fifo": True,
+                    "has_rx_fifo": True,
+                    "fifo_depth": 16,
+                    "registers": [
+                        {"name": "RBR_THR", "address": "0x00", "access": "RW"},
+                        {"name": "IER", "address": "0x04", "access": "RW"},
+                        {"name": "LCR", "address": "0x0C", "access": "RW"},
+                        {"name": "LSR", "address": "0x14", "access": "RO"},
+                    ],
+                    "features": ["scoreboard", "coverage", "sequences"]
+                }),
+                model="mock"
+            )
+        elif "axi" in prompt_lower:
+            return LLMResponse(
+                content=json.dumps({
+                    "protocol": "axi4lite",
+                    "module_name": "axi4lite_dut",
+                    "data_width": 32,
+                    "addr_width": 32,
+                    "registers": [
+                        {"name": "STATUS", "address": "0x00", "access": "RO", "reset_value": "0x0"},
+                        {"name": "CONTROL", "address": "0x04", "access": "RW", "reset_value": "0x0"},
+                        {"name": "DATA", "address": "0x08", "access": "RW", "reset_value": "0x0"},
+                    ],
+                    "features": ["scoreboard", "coverage", "sequences"]
+                }),
+                model="mock"
+            )
+        else:
+            # Default APB response
+            return LLMResponse(
+                content=json.dumps({
+                    "protocol": "apb",
+                    "module_name": "apb_register_block",
+                    "data_width": 32,
+                    "addr_width": 8,
+                    "registers": [
+                        {"name": "STATUS", "address": "0x00", "access": "RO", "reset_value": "0x0"},
+                        {"name": "CONTROL", "address": "0x04", "access": "RW", "reset_value": "0x0"},
+                        {"name": "DATA", "address": "0x08", "access": "RW", "reset_value": "0x0"},
+                        {"name": "CONFIG", "address": "0x0C", "access": "RW", "reset_value": "0x0"}
+                    ],
+                    "features": ["scoreboard", "coverage", "sequences"]
+                }),
+                model="mock"
+            )
 
 
 class GeminiClient(BaseLLMClient):
