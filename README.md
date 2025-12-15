@@ -126,6 +126,21 @@ python verifai.py --spec "UART transmitter" --llm openai
 python verifai.py --spec "SPI master" --llm ollama
 ```
 
+### 🌐 Web UI (New!)
+
+```bash
+# Launch the Streamlit web interface
+streamlit run app.py
+
+# Opens at http://localhost:8501
+```
+
+Features:
+- 🎨 Beautiful modern interface
+- 📝 Template quick-select for common protocols
+- 👁️ Live preview of generated code
+- ⬇️ Download as ZIP or individual files
+
 ---
 
 ## 📚 Examples

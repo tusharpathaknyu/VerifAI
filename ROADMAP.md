@@ -21,13 +21,13 @@
 - [ ] CI/CD pipeline with GitHub Actions
 
 ### 2.2 Error Handling & UX
-- [ ] Comprehensive error messages
+- [x] Comprehensive error messages
 - [ ] Input validation with helpful suggestions
-- [ ] Progress indicators during generation
-- [ ] Dry-run mode (preview without writing files)
+- [x] Progress indicators during generation
+- [x] Dry-run mode (preview without writing files) - via Web UI
 
 ### 2.3 Documentation
-- [ ] Detailed README with badges
+- [x] Detailed README with badges
 - [ ] API documentation
 - [ ] Example gallery (5+ specs with outputs)
 - [ ] Video demo for LinkedIn
@@ -38,7 +38,7 @@
 
 ### 3.1 More Protocols
 - [ ] AXI4 Full (burst transactions)
-- [ ] UART protocol
+- [x] UART protocol ✅
 - [ ] SPI protocol
 - [ ] I2C protocol
 - [ ] Wishbone protocol
@@ -50,10 +50,10 @@
 - [ ] Constraint randomization hints
 
 ### 3.3 Interactive Mode
-- [ ] Web UI with Streamlit/Gradio
-- [ ] Real-time preview
+- [x] Web UI with Streamlit ✅
+- [x] Real-time preview ✅
 - [ ] Template customization UI
-- [ ] Export to different formats
+- [x] Export to different formats (ZIP, individual files) ✅
 
 ---
 
