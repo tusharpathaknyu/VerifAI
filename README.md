@@ -60,9 +60,10 @@
 |----------|--------|----------|
 | **APB** | ✅ Ready | Full APB3/APB4 support |
 | **AXI4-Lite** | ✅ Ready | Read/Write channels |
+| **UART** | ✅ Ready | TX/RX, baud rates, parity, error injection |
 | AXI4 Full | 🔜 Coming | Burst, ID support |
-| UART | 🔜 Coming | TX/RX verification |
 | SPI | 📋 Planned | Master/Slave modes |
+| I2C | 📋 Planned | Multi-master support |
 
 ### 🔌 Multiple LLM Backends
 ```
@@ -114,6 +115,9 @@ python verifai.py --spec "APB slave with 4 control registers" --llm gemini
 
 # 📁 Output to specific directory
 python verifai.py --spec "AXI4-Lite memory controller" --output ./my_tb
+
+# 🔌 Generate UART testbench
+python verifai.py --spec "UART controller with 115200 baud, 8N1" --llm gemini
 
 # 🤖 Use different LLM
 python verifai.py --spec "UART transmitter" --llm openai
@@ -188,6 +192,39 @@ class axi4lite_scoreboard extends uvm_scoreboard;
             end
         end
     endfunction
+endclass
+```
+
+### Example 3: UART Controller 🆕
+
+**Specification:**
+```
+UART controller testbench:
+- 115200 baud rate
+- 8 data bits, no parity, 1 stop bit (8N1)
+- Error injection support
+```
+
+**Generated Driver (excerpt):**
+```systemverilog
+class uart_driver extends uvm_driver #(uart_seq_item);
+    int bit_period_ns = 8680;  // ~115200 baud
+    
+    task drive_byte(logic [7:0] data, parity_type_e parity, bit frame_err, bit parity_err);
+        // Start bit (low)
+        vif.tx = 1'b0;
+        #(bit_period_ns * 1ns);
+        
+        // Data bits (LSB first)
+        for (int i = 0; i < 8; i++) begin
+            vif.tx = data[i];
+            #(bit_period_ns * 1ns);
+        end
+        
+        // Stop bit
+        vif.tx = frame_err ? 1'b0 : 1'b1;  // Inject frame error
+        #(bit_period_ns * 1ns);
+    endtask
 endclass
 ```
 
