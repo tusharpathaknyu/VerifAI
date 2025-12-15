@@ -67,6 +67,12 @@ class ParsedSpec:
     spi_cs_setup_time: int = 1
     spi_cs_hold_time: int = 1
     spi_supports_qspi: bool = False
+    
+    # I2C-specific options
+    i2c_speed_mode: str = "standard"  # standard, fast, fast_plus, high
+    i2c_address_bits: int = 7  # 7 or 10 bit addressing
+    i2c_clock_stretching: bool = True
+    i2c_multi_master: bool = False
 
 
 SYSTEM_PROMPT = """You are an expert hardware verification engineer specializing in UVM (Universal Verification Methodology) and AMBA protocols.
@@ -107,7 +113,13 @@ You must respond with ONLY a valid JSON object (no markdown, no explanation) wit
     "spi_num_slaves": 1 (number of slave devices),
     "spi_msb_first": true (MSB or LSB first transmission),
     "spi_clock_divider": 2 (system clock to SPI clock divider),
-    "spi_supports_qspi": false (Quad SPI support)
+    "spi_supports_qspi": false (Quad SPI support),
+    
+    // I2C-specific fields (only if protocol is "i2c"):
+    "i2c_speed_mode": "standard" or "fast" or "fast_plus" or "high",
+    "i2c_address_bits": 7 (7 or 10 bit addressing),
+    "i2c_clock_stretching": true (slave clock stretching support),
+    "i2c_multi_master": false (multi-master support)
 }
 
 Rules:
@@ -237,6 +249,11 @@ class SpecParser:
             spi_cs_setup_time=data.get("spi_cs_setup_time", 1),
             spi_cs_hold_time=data.get("spi_cs_hold_time", 1),
             spi_supports_qspi=data.get("spi_supports_qspi", False),
+            # I2C-specific
+            i2c_speed_mode=data.get("i2c_speed_mode", "standard"),
+            i2c_address_bits=data.get("i2c_address_bits", 7),
+            i2c_clock_stretching=data.get("i2c_clock_stretching", True),
+            i2c_multi_master=data.get("i2c_multi_master", False),
         )
     
     def parse_quick(self, user_spec: str) -> ParsedSpec:

@@ -227,6 +227,21 @@ class MockLLMClient(BaseLLMClient):
                 }),
                 model="mock"
             )
+        elif "i2c" in prompt_lower or "iic" in prompt_lower or "two wire" in prompt_lower:
+            return LLMResponse(
+                content=json.dumps({
+                    "protocol": "i2c",
+                    "module_name": "i2c_master",
+                    "data_width": 8,
+                    "i2c_speed_mode": "standard",
+                    "i2c_address_bits": 7,
+                    "i2c_clock_stretching": True,
+                    "i2c_multi_master": False,
+                    "registers": [],
+                    "features": ["scoreboard", "coverage", "sequences"]
+                }),
+                model="mock"
+            )
         elif "axi" in prompt_lower:
             return LLMResponse(
                 content=json.dumps({

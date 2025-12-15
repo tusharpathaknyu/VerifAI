@@ -190,6 +190,12 @@ class UVMGenerator:
             "spi_cs_setup_time": spec.spi_cs_setup_time,
             "spi_cs_hold_time": spec.spi_cs_hold_time,
             "spi_supports_qspi": spec.spi_supports_qspi,
+            
+            # I2C-specific
+            "i2c_speed_mode": spec.i2c_speed_mode,
+            "i2c_address_bits": spec.i2c_address_bits,
+            "i2c_clock_stretching": spec.i2c_clock_stretching,
+            "i2c_multi_master": spec.i2c_multi_master,
         }
     
     def _get_protocol_templates(self, protocol: str) -> List[Dict[str, str]]:
@@ -261,6 +267,23 @@ class UVMGenerator:
                 {"template": "spi/spi_env.sv.j2", "output": "{prefix}_env.sv", "category": "env"},
                 {"template": "spi/spi_base_test.sv.j2", "output": "{prefix}_base_test.sv", "category": "test"},
                 {"template": "spi/spi_top_tb.sv.j2", "output": "top_tb.sv", "category": "top"},
+            ]
+        
+        elif protocol == "i2c":
+            return [
+                {"template": "i2c/i2c_pkg.sv.j2", "output": "{prefix}_pkg.sv", "category": "package"},
+                {"template": "i2c/i2c_interface.sv.j2", "output": "{prefix}_if.sv", "category": "interface"},
+                {"template": "i2c/i2c_seq_item.sv.j2", "output": "{prefix}_seq_item.sv", "category": "agent"},
+                {"template": "i2c/i2c_driver.sv.j2", "output": "{prefix}_driver.sv", "category": "agent"},
+                {"template": "i2c/i2c_monitor.sv.j2", "output": "{prefix}_monitor.sv", "category": "agent"},
+                {"template": "i2c/i2c_sequencer.sv.j2", "output": "{prefix}_sequencer.sv", "category": "agent"},
+                {"template": "i2c/i2c_agent.sv.j2", "output": "{prefix}_agent.sv", "category": "agent"},
+                {"template": "i2c/i2c_sequence_lib.sv.j2", "output": "{prefix}_seq_lib.sv", "category": "sequence"},
+                {"template": "i2c/i2c_scoreboard.sv.j2", "output": "{prefix}_scoreboard.sv", "category": "scoreboard"},
+                {"template": "i2c/i2c_coverage.sv.j2", "output": "{prefix}_coverage.sv", "category": "coverage"},
+                {"template": "i2c/i2c_env.sv.j2", "output": "{prefix}_env.sv", "category": "env"},
+                {"template": "i2c/i2c_base_test.sv.j2", "output": "{prefix}_base_test.sv", "category": "test"},
+                {"template": "i2c/i2c_top_tb.sv.j2", "output": "top_tb.sv", "category": "top"},
             ]
         
         else:

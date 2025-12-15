@@ -122,6 +122,8 @@ with st.sidebar:
         "UART with Flow Control": "UART testbench with 9600 baud, even parity, RTS/CTS hardware flow control, 16-byte FIFO",
         "SPI Master Mode 0": "SPI master controller testbench in Mode 0 (CPOL=0, CPHA=0), 8-bit data width, single slave, MSB first",
         "SPI Multi-Slave": "SPI master with 4 slave devices, Mode 3, 16-bit transfers, with QSPI support",
+        "I2C Master Standard": "I2C master controller testbench in standard mode (100kHz), 7-bit addressing, with clock stretching support",
+        "I2C Fast Mode": "I2C master testbench in fast mode (400kHz), 7-bit addressing, multi-byte transfers to EEPROM at address 0x50",
     }
     
     selected_template = st.selectbox(
@@ -142,8 +144,8 @@ with st.sidebar:
     - ✅ APB (APB3/APB4)
     - ✅ AXI4-Lite
     - ✅ UART
-    - ✅ SPI (NEW!)
-    - 🔜 I2C
+    - ✅ SPI
+    - ✅ I2C (NEW!)
     
     [GitHub](https://github.com/tusharpathaknyu/VerifAI) | 
     [Documentation](#)

@@ -62,8 +62,8 @@
 | **AXI4-Lite** | ✅ Ready | Read/Write channels |
 | **UART** | ✅ Ready | TX/RX, baud rates, parity, error injection |
 | **SPI** | ✅ Ready | All 4 modes, multi-slave, QSPI support |
+| **I2C** | ✅ Ready | Standard/Fast/Fast+/High Speed, 7/10-bit addressing, clock stretching |
 | AXI4 Full | 🔜 Coming | Burst, ID support |
-| I2C | 📋 Planned | Multi-master support |
 
 ### 🔌 Multiple LLM Backends
 ```
@@ -239,6 +239,46 @@ class uart_driver extends uvm_driver #(uart_seq_item);
         // Stop bit
         vif.tx = frame_err ? 1'b0 : 1'b1;  // Inject frame error
         #(bit_period_ns * 1ns);
+    endtask
+endclass
+```
+
+### Example 4: I2C Master 🆕
+
+**Specification:**
+```
+I2C master controller testbench:
+- Standard mode (100kHz)
+- 7-bit addressing
+- Clock stretching support
+- EEPROM read/write operations
+```
+
+**Generated Sequence (excerpt):**
+```systemverilog
+class i2c_eeprom_page_seq extends uvm_sequence #(i2c_seq_item);
+    `uvm_object_utils(i2c_eeprom_page_seq)
+    
+    logic [6:0] eeprom_addr = 7'h50;
+    logic [7:0] page_addr = 0;
+    int page_size = 16;
+    
+    virtual task body();
+        i2c_seq_item write_item, read_item;
+        
+        // Page write
+        `uvm_do_with(write_item, {
+            slave_addr == eeprom_addr;
+            rw == I2C_WRITE;
+            data.size() == page_size + 1;  // addr + data
+        })
+        
+        // Page read with repeated start
+        `uvm_do_with(read_item, {
+            slave_addr == eeprom_addr;
+            rw == I2C_READ;
+            num_bytes == page_size;
+        })
     endtask
 endclass
 ```
