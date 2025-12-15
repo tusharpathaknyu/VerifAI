@@ -12,8 +12,9 @@
 [![Protocols](https://img.shields.io/badge/Protocols-5%20Supported-blue?style=flat-square)](README.md#-protocol-support)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
+[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-Cloud%20Run-4285F4?style=flat-square&logo=googlecloud)](https://verifai-761803298484.us-central1.run.app)
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Examples](#-examples) • [Roadmap](#-roadmap) • [Contributing](#-contributing)
+[🌐 **Try Live Demo**](https://verifai-761803298484.us-central1.run.app) • [Features](#-features) • [Quick Start](#-quick-start) • [Examples](#-examples) • [Roadmap](#-roadmap) • [Contributing](#-contributing)
 
 </div>
 

@@ -1,0 +1,61 @@
+# Google Cloud Run deployment configuration for VerifAI
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: verifai
+  labels:
+    cloud.googleapis.com/location: us-central1
+  annotations:
+    run.googleapis.com/description: "AI-Powered UVM Testbench Generator"
+spec:
+  template:
+    metadata:
+      annotations:
+        # Auto-scaling configuration
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
+        # Container configuration
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/cpu-throttling: "false"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      containers:
+        - image: gcr.io/PROJECT_ID/verifai:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          env:
+            # Application configuration
+            - name: PORT
+              value: "8080"
+          # Secrets from Secret Manager (optional - for LLM API keys)
+          # Uncomment and configure as needed:
+          # - name: GOOGLE_API_KEY
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: google-api-key
+          #       key: latest
+          # - name: OPENAI_API_KEY
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: openai-api-key
+          #       key: latest
+          # Startup probe
+          startupProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
