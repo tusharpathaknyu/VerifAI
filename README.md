@@ -7,7 +7,7 @@
 **🤖 Transform Natural Language → Production-Ready UVM Testbenches**
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg?style=flat-square&logo=python)](https://python.org)
-[![Tests](https://img.shields.io/badge/Tests-61%20Passing-success?style=flat-square&logo=pytest)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-80%20Passing-success?style=flat-square&logo=pytest)](tests/)
 [![UVM 1.2](https://img.shields.io/badge/UVM-1.2%20Compatible-orange.svg?style=flat-square)](https://www.accellera.org/downloads/standards/uvm)
 [![Protocols](https://img.shields.io/badge/Protocols-5%20Supported-blue?style=flat-square)](README.md#-protocol-support)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
@@ -49,6 +49,8 @@
 | Generic UVM snippets | ✅ | ✅ |
 | **RTL-aware generation** | ❌ | ✅ **Exact port matching!** |
 | **IP-XACT/SystemRDL import** | ❌ | ✅ **Industry standard** |
+| **Coverage gap analysis** | ❌ | ✅ **Suggests sequences!** |
+| **SVA assertion generation** | ❌ | ✅ **50+ assertions in seconds** |
 | Protocol auto-detection | ❌ | ✅ APB, AXI, SPI, I2C, UART |
 | FSM detection | ❌ | ✅ State machine analysis |
 | Register-specific tests | ❌ | ✅ From spec files |
@@ -74,6 +76,31 @@ Import industry-standard register specifications:
 - **SystemRDL** - Semiconductor company favorite
 - **CSV** - Simple spreadsheet format
 - **JSON** - Flexible custom format
+
+### 📊 Coverage Gap Analysis (NEW!)
+Upload your coverage report → Get **targeted sequences to close gaps**
+```
+Upload: coverage_report.ucdb
+↓ VerifAI Analyzes:
+  ✓ Parses UCDB/UCIS/HTML coverage formats
+  ✓ Identifies uncovered bins: addr_0x08 (0%), write_op (23%)
+  ✓ Determines priority: High for 0%, boundaries
+↓ Generates:
+  UVM sequences specifically targeting each gap!
+```
+
+### ✅ SVA Assertion Generator (NEW!)
+Upload RTL → Get **50+ SystemVerilog Assertions in seconds**
+```
+Upload: apb_slave.sv
+↓ VerifAI Generates:
+  ✓ Protocol compliance (APB, AXI, SPI, I2C, UART)
+  ✓ Handshake checks (req/ack, valid/ready)
+  ✓ Stability rules (data stable when valid)
+  ✓ FSM properties (no illegal states)
+  ✓ Reset behavior assertions
+  ✓ Cover properties for functional coverage
+```
 
 ### 🤖 AI-Powered Understanding
 - Natural language specification parsing
