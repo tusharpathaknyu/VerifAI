@@ -482,6 +482,32 @@ def analyze_rtl(rtl_content: str, file_path: str = "") -> Dict:
     }
 
 
+class SimpleParsedRTL:
+    """Simple wrapper for app.py compatibility"""
+    def __init__(self, parsed: ParsedRTL):
+        self._parsed = parsed
+        self.module_name = parsed.module_name
+        self.inputs = [p.name for p in parsed.input_ports]
+        self.outputs = [p.name for p in parsed.output_ports]
+        self.clocks = parsed.clocks.clock_signals
+        self.resets = parsed.clocks.reset_signals
+        self.fsm = {
+            'states': parsed.fsm.states if parsed.fsm else [],
+            'state_var': parsed.fsm.state_variable if parsed.fsm else None
+        } if parsed.fsm else None
+        self.ports = parsed.ports
+        self.parameters = parsed.parameters
+
+
+def parse_rtl(rtl_content: str, file_path: str = "") -> SimpleParsedRTL:
+    """
+    Convenience function to parse RTL and return a simple object for app.py.
+    """
+    parser = RTLParser()
+    parsed = parser.parse(rtl_content, file_path)
+    return SimpleParsedRTL(parsed)
+
+
 # Example usage and testing
 if __name__ == "__main__":
     # Test with a sample APB slave
