@@ -3,7 +3,11 @@ VerifAI - UVM Testbench Generator
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import os
+import io
+import zipfile
+import json
 import google.generativeai as genai
 from src.templates import PROTOCOL_TEMPLATES
 from src.rtl_parser import parse_rtl
@@ -397,8 +401,407 @@ st.markdown("""
         border-radius: 6px !important;
         font-weight: 500;
     }
+    
+    /* Quality Score Gauge */
+    .quality-gauge {
+        text-align: center;
+        padding: 1rem;
+    }
+    .score-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+    .score-high { background: linear-gradient(135deg, #2da44e, #1a7f37); }
+    .score-medium { background: linear-gradient(135deg, #d4a72c, #9a6700); }
+    .score-low { background: linear-gradient(135deg, #cf222e, #a40e26); }
+    
+    /* Bug prediction card */
+    .bug-card {
+        background: #fff8c5;
+        border: 1px solid #d4a72c;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .bug-card-high {
+        background: #ffebe9;
+        border-color: #ff8182;
+    }
+    .bug-title {
+        font-weight: 600;
+        color: #9a6700;
+        font-size: 0.85rem;
+    }
+    .bug-card-high .bug-title {
+        color: #cf222e;
+    }
+    .bug-desc {
+        color: #57606a;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Stats grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .stat-box {
+        background: white;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 0.75rem;
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0969da;
+    }
+    .stat-label {
+        font-size: 0.7rem;
+        color: #57606a;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# ============== HELPER FUNCTIONS ==============
+
+def generate_wavedrom(protocol: str) -> str:
+    """Generate WaveDrom JSON for protocol timing diagrams"""
+    wavedroms = {
+        "apb": {
+            "signal": [
+                {"name": "PCLK", "wave": "p........"},
+                {"name": "PSEL", "wave": "0.1....0."},
+                {"name": "PENABLE", "wave": "0..1...0."},
+                {"name": "PWRITE", "wave": "0.1....0."},
+                {"name": "PADDR", "wave": "x.3....x.", "data": ["ADDR"]},
+                {"name": "PWDATA", "wave": "x.4....x.", "data": ["DATA"]},
+                {"name": "PREADY", "wave": "0....1.0."},
+                {"name": "PRDATA", "wave": "x.....5x.", "data": ["RDATA"]}
+            ],
+            "head": {"text": "APB Write Transaction", "tick": 0}
+        },
+        "axi4lite": {
+            "signal": [
+                {"name": "ACLK", "wave": "p........."},
+                {"name": "AWVALID", "wave": "0.1..0...."},
+                {"name": "AWREADY", "wave": "0...10...."},
+                {"name": "AWADDR", "wave": "x.3..x....", "data": ["ADDR"]},
+                {"name": "WVALID", "wave": "0....1.0.."},
+                {"name": "WREADY", "wave": "0.....10.."},
+                {"name": "WDATA", "wave": "x....4.x..", "data": ["DATA"]},
+                {"name": "BVALID", "wave": "0.......1."},
+                {"name": "BREADY", "wave": "1........."}
+            ],
+            "head": {"text": "AXI4-Lite Write Transaction", "tick": 0}
+        },
+        "spi": {
+            "signal": [
+                {"name": "SCLK", "wave": "0.hlhlhlhl"},
+                {"name": "CS_N", "wave": "10.......1"},
+                {"name": "MOSI", "wave": "x.34567890", "data": ["7","6","5","4","3","2","1","0"]},
+                {"name": "MISO", "wave": "x.90876543", "data": ["7","6","5","4","3","2","1","0"]}
+            ],
+            "head": {"text": "SPI Mode 0 Transfer (8-bit)", "tick": 0}
+        },
+        "uart": {
+            "signal": [
+                {"name": "TX", "wave": "1.0.3.4.5.6.7.8.9.0.1.1", "data": ["ST","0","1","2","3","4","5","6","7","SP"]}
+            ],
+            "head": {"text": "UART Frame (8N1)", "tick": 0},
+            "foot": {"text": "Start bit, 8 data bits, Stop bit"}
+        },
+        "i2c": {
+            "signal": [
+                {"name": "SCL", "wave": "1.0h.l.h.l.h.l.h.l.h.l.h1"},
+                {"name": "SDA", "wave": "1.0..3...4...5...6...0..1", "data": ["A6","A5","A4","ACK"]}
+            ],
+            "head": {"text": "I2C Start + Address", "tick": 0}
+        }
+    }
+    return json.dumps(wavedroms.get(protocol.lower().replace("-", "").replace("4_", "4"), wavedroms["apb"]))
+
+def render_wavedrom(wavedrom_json: str, height: int = 150) -> None:
+    """Render WaveDrom waveform using embedded JavaScript"""
+    html = f'''
+    <div id="waveform"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js"></script>
+    <script>
+        var wave = {wavedrom_json};
+        WaveDrom.RenderWaveForm(document.getElementById("waveform"), wave, "default");
+    </script>
+    '''
+    components.html(html, height=height)
+
+def calculate_quality_score(parsed, generated_code: str) -> dict:
+    """Calculate testbench quality score"""
+    score = 0
+    breakdown = {}
+    
+    # Component completeness (40 points)
+    components = ['interface', 'driver', 'monitor', 'scoreboard', 'coverage', 'agent', 'env', 'sequence', 'test']
+    found = sum(1 for c in components if c in generated_code.lower())
+    breakdown['completeness'] = int((found / len(components)) * 40)
+    score += breakdown['completeness']
+    
+    # Protocol awareness (20 points)
+    if hasattr(parsed, 'complexity') and parsed.complexity:
+        if parsed.complexity.detected_protocol != "generic":
+            breakdown['protocol'] = 20
+        else:
+            breakdown['protocol'] = 10
+    else:
+        breakdown['protocol'] = 5
+    score += breakdown['protocol']
+    
+    # Coverage potential (20 points)
+    if 'covergroup' in generated_code.lower() or 'coverpoint' in generated_code.lower():
+        breakdown['coverage'] = 20
+    elif 'coverage' in generated_code.lower():
+        breakdown['coverage'] = 10
+    else:
+        breakdown['coverage'] = 5
+    score += breakdown['coverage']
+    
+    # Code quality indicators (20 points)
+    quality = 0
+    if 'uvm_info' in generated_code.lower(): quality += 5
+    if 'uvm_error' in generated_code.lower(): quality += 5
+    if '`uvm_' in generated_code: quality += 5
+    if 'virtual interface' in generated_code.lower(): quality += 5
+    breakdown['quality'] = quality
+    score += quality
+    
+    return {'score': min(score, 100), 'breakdown': breakdown}
+
+def predict_bugs(parsed) -> list:
+    """Predict likely verification bugs based on RTL analysis"""
+    bugs = []
+    
+    if hasattr(parsed, 'complexity') and parsed.complexity:
+        cx = parsed.complexity
+        protocol = cx.detected_protocol
+        
+        # Common protocol-specific bugs
+        if protocol == "apb":
+            bugs.append({
+                'severity': 'high',
+                'title': 'PREADY Timing',
+                'description': 'APB slave may not handle PREADY deasserted case properly - ensure wait state testing'
+            })
+            bugs.append({
+                'severity': 'medium', 
+                'title': 'Back-to-Back Transactions',
+                'description': 'Sequential transactions without idle cycles may cause data corruption'
+            })
+        elif protocol == "axi4lite":
+            bugs.append({
+                'severity': 'high',
+                'title': 'Handshake Deadlock',
+                'description': 'AXI VALID/READY handshake may deadlock if VALID waits for READY'
+            })
+            bugs.append({
+                'severity': 'medium',
+                'title': 'Outstanding Transactions',
+                'description': 'Multiple outstanding transactions may cause response ordering issues'
+            })
+        elif protocol == "spi":
+            bugs.append({
+                'severity': 'high',
+                'title': 'Clock Phase/Polarity',
+                'description': 'SPI mode mismatch (CPOL/CPHA) causes bit-shifted data'
+            })
+        elif protocol == "uart":
+            bugs.append({
+                'severity': 'medium',
+                'title': 'Baud Rate Mismatch',
+                'description': 'Clock frequency drift may cause framing errors'
+            })
+        elif protocol == "i2c":
+            bugs.append({
+                'severity': 'high',
+                'title': 'Clock Stretching',
+                'description': 'Slave clock stretching not handled may cause data loss'
+            })
+        
+        # FSM-related bugs
+        if cx.has_fsm and cx.fsm_states > 2:
+            bugs.append({
+                'severity': 'high',
+                'title': 'FSM Deadlock',
+                'description': f'FSM with {cx.fsm_states} states may have unreachable states or deadlock conditions'
+            })
+        
+        # Reset-related bugs
+        if parsed.resets:
+            bugs.append({
+                'severity': 'medium',
+                'title': 'Reset Race Condition',
+                'description': 'Async reset release near clock edge may cause metastability'
+            })
+        
+        # Data width bugs
+        if cx.data_width >= 32:
+            bugs.append({
+                'severity': 'medium',
+                'title': 'Data Bus Boundary',
+                'description': f'{cx.data_width}-bit data may have byte lane issues on partial writes'
+            })
+    
+    return bugs[:5]  # Return top 5 bugs
+
+def create_testbench_zip(module_name: str, generated_code: str, parsed) -> bytes:
+    """Create ZIP file with testbench and scripts"""
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        # Main testbench file
+        zf.writestr(f"tb/{module_name}_tb_pkg.sv", generated_code)
+        
+        # Interface file (extract from generated or create placeholder)
+        interface_code = f'''// Auto-generated interface for {module_name}
+interface {module_name}_if(input logic clk);
+    // TODO: Add signals from generated testbench
+    clocking cb @(posedge clk);
+        // Add clocking block signals
+    endclocking
+    
+    modport DRV(clocking cb);
+    modport MON(clocking cb);
+endinterface
+'''
+        zf.writestr(f"tb/{module_name}_if.sv", interface_code)
+        
+        # Makefile for VCS
+        vcs_makefile = f'''# Makefile for VCS simulation
+TB_TOP = {module_name}_tb_top
+DUT = ../rtl/{module_name}.sv
+
+# VCS flags
+VCS_FLAGS = -full64 -sverilog -timescale=1ns/1ps
+VCS_FLAGS += +define+UVM_NO_DEPRECATED
+VCS_FLAGS += -ntb_opts uvm-1.2
+
+# Compile
+compile:
+\tvcs $(VCS_FLAGS) -o simv \\
+\t\t$(DUT) \\
+\t\t{module_name}_tb_pkg.sv \\
+\t\t{module_name}_if.sv \\
+\t\t$(TB_TOP).sv
+
+# Run
+run:
+\t./simv +UVM_TESTNAME={module_name}_base_test +UVM_VERBOSITY=UVM_MEDIUM
+
+# Run with coverage
+run_cov:
+\t./simv +UVM_TESTNAME={module_name}_base_test -cm line+cond+fsm+tgl
+
+# Clean
+clean:
+\trm -rf simv* csrc *.log *.vpd DVEfiles coverage*
+
+.PHONY: compile run run_cov clean
+'''
+        zf.writestr("tb/Makefile.vcs", vcs_makefile)
+        
+        # Makefile for Questa
+        questa_makefile = f'''# Makefile for Questa simulation
+TB_TOP = {module_name}_tb_top
+DUT = ../rtl/{module_name}.sv
+
+# Questa flags
+VLOG_FLAGS = -sv -timescale 1ns/1ps
+VSIM_FLAGS = -c -do "run -all; quit"
+
+# Compile
+compile:
+\tvlib work
+\tvlog $(VLOG_FLAGS) +define+UVM_NO_DEPRECATED \\
+\t\t$(DUT) \\
+\t\t{module_name}_tb_pkg.sv \\
+\t\t{module_name}_if.sv \\
+\t\t$(TB_TOP).sv
+
+# Run
+run:
+\tvsim $(VSIM_FLAGS) +UVM_TESTNAME={module_name}_base_test $(TB_TOP)
+
+# GUI
+gui:
+\tvsim +UVM_TESTNAME={module_name}_base_test $(TB_TOP)
+
+# Clean
+clean:
+\trm -rf work transcript *.wlf
+
+.PHONY: compile run gui clean
+'''
+        zf.writestr("tb/Makefile.questa", questa_makefile)
+        
+        # README
+        readme = f'''# {module_name} UVM Testbench
+Generated by VerifAI - https://verifai-761803298484.us-central1.run.app
+
+## Directory Structure
+```
+tb/
+├── {module_name}_tb_pkg.sv    # Main testbench package
+├── {module_name}_if.sv        # Interface
+├── Makefile.vcs               # VCS build script
+└── Makefile.questa            # Questa build script
+```
+
+## Quick Start
+
+### VCS
+```bash
+cd tb
+make -f Makefile.vcs compile
+make -f Makefile.vcs run
+```
+
+### Questa
+```bash
+cd tb
+make -f Makefile.questa compile
+make -f Makefile.questa run
+```
+
+## Test Configuration
+- Default test: {module_name}_base_test
+- Verbosity: UVM_MEDIUM (configurable via +UVM_VERBOSITY)
+
+## Generated Components
+- Transaction/Sequence Item
+- Driver
+- Monitor  
+- Agent
+- Scoreboard
+- Coverage Collector
+- Environment
+- Base Test
+'''
+        zf.writestr("README.md", readme)
+    
+    zip_buffer.seek(0)
+    return zip_buffer.getvalue()
 
 # Navigation
 st.markdown("""
@@ -690,30 +1093,75 @@ with tabs[0]:
                     for test in cl.edge_cases[:3]:
                         st.markdown(f"- {test}")
             
-            # Waveform Diagrams - NEW FEATURE
-            if hasattr(parsed, 'waveforms') and parsed.waveforms:
-                with st.expander("Protocol Timing Diagrams", expanded=True):
-                    for wf in parsed.waveforms:
-                        st.markdown(f"**{wf.description}**")
-                        st.markdown(f'<div class="waveform-container">{wf.ascii_art}</div>', unsafe_allow_html=True)
+            # Waveform Diagrams - Interactive WaveDrom
+            if hasattr(parsed, 'complexity') and parsed.complexity:
+                protocol = parsed.complexity.detected_protocol
+                if protocol != "generic":
+                    with st.expander("Interactive Protocol Timing", expanded=True):
+                        wavedrom_json = generate_wavedrom(protocol)
+                        render_wavedrom(wavedrom_json, height=180)
             
-            # Constraint Hints - NEW FEATURE
+            # Bug Prediction - NEW FEATURE
+            bugs = predict_bugs(parsed)
+            if bugs:
+                with st.expander("🔍 Predicted Verification Issues", expanded=True):
+                    st.markdown("*AI-predicted bugs to verify against:*")
+                    for bug in bugs:
+                        severity_class = "bug-card-high" if bug['severity'] == 'high' else ""
+                        st.markdown(f'''<div class="bug-card {severity_class}">
+                            <div class="bug-title">⚠️ {bug['title']}</div>
+                            <div class="bug-desc">{bug['description']}</div>
+                        </div>''', unsafe_allow_html=True)
+            
+            # Constraint Hints
             if hasattr(parsed, 'constraints') and parsed.constraints:
                 with st.expander("Constraint Randomization Hints"):
                     for hint in parsed.constraints:
                         st.markdown(f'<div class="constraint-box"><div class="constraint-title">{hint.signal_name}</div><div class="constraint-desc">{hint.description}</div></div>', unsafe_allow_html=True)
                         st.code(hint.constraint_code, language="systemverilog")
             
-            # Generated code
+            # Generated code with Quality Score
             if st.session_state.get('tb_result'):
+                # Calculate and show quality score
+                quality = calculate_quality_score(parsed, st.session_state['tb_result'])
+                score = quality['score']
+                score_class = "score-high" if score >= 80 else ("score-medium" if score >= 60 else "score-low")
+                
+                col_score, col_breakdown = st.columns([1, 3])
+                with col_score:
+                    st.markdown(f'''<div class="quality-gauge">
+                        <div class="score-circle {score_class}">{score}</div>
+                        <div style="font-weight: 600; color: #24292f;">Quality Score</div>
+                    </div>''', unsafe_allow_html=True)
+                
+                with col_breakdown:
+                    bd = quality['breakdown']
+                    st.markdown(f'''<div class="stats-grid">
+                        <div class="stat-box"><div class="stat-value">{bd.get("completeness", 0)}/40</div><div class="stat-label">Completeness</div></div>
+                        <div class="stat-box"><div class="stat-value">{bd.get("protocol", 0)}/20</div><div class="stat-label">Protocol</div></div>
+                        <div class="stat-box"><div class="stat-value">{bd.get("coverage", 0)}/20</div><div class="stat-label">Coverage</div></div>
+                        <div class="stat-box"><div class="stat-value">{bd.get("quality", 0)}/20</div><div class="stat-label">UVM Best Practices</div></div>
+                    </div>''', unsafe_allow_html=True)
+                
                 st.code(st.session_state['tb_result'], language="systemverilog")
                 
-                c1, c2 = st.columns(2)
+                # Download options
+                c1, c2, c3 = st.columns(3)
                 with c1:
                     st.download_button(
-                        "Download Testbench",
+                        "📄 Download .sv",
                         st.session_state['tb_result'],
                         f"{parsed.module_name}_tb.sv",
+                        use_container_width=True
+                    )
+                with c2:
+                    # ZIP with simulator scripts
+                    zip_data = create_testbench_zip(parsed.module_name, st.session_state['tb_result'], parsed)
+                    st.download_button(
+                        "📦 Download ZIP",
+                        zip_data,
+                        f"{parsed.module_name}_uvm_tb.zip",
+                        mime="application/zip",
                         use_container_width=True
                     )
         
@@ -802,22 +1250,37 @@ Use UVM 1.2 methodology. Add comments explaining key sections.
     with col2:
         st.markdown('<div class="card-title">Generated Testbench</div>', unsafe_allow_html=True)
         
-        # Show protocol waveform for selected protocol
-        from src.rtl_parser import WaveformGenerator
-        waveforms = WaveformGenerator.generate_for_protocol(protocol.lower().replace('-', ''))
-        if waveforms:
-            with st.expander("Protocol Timing Diagram", expanded=True):
-                for wf in waveforms[:1]:  # Show first waveform
-                    st.markdown(f'<div class="waveform-container">{wf.ascii_art}</div>', unsafe_allow_html=True)
+        # Show interactive protocol waveform
+        with st.expander("Interactive Protocol Timing", expanded=True):
+            protocol_key = protocol.lower().replace('-', '').replace('4_', '4')
+            wavedrom_json = generate_wavedrom(protocol_key)
+            render_wavedrom(wavedrom_json, height=180)
         
         if st.session_state.get('proto_result'):
             st.code(st.session_state['proto_result'], language="systemverilog")
-            st.download_button(
-                "Download Testbench",
-                st.session_state['proto_result'],
-                f"{protocol.lower().replace('-', '_')}_uvm_tb.sv",
-                use_container_width=True
-            )
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                st.download_button(
+                    "📄 Download .sv",
+                    st.session_state['proto_result'],
+                    f"{protocol.lower().replace('-', '_')}_uvm_tb.sv",
+                    use_container_width=True
+                )
+            with c2:
+                # ZIP download for protocol template
+                zip_data = create_testbench_zip(
+                    protocol.lower().replace('-', '_'),
+                    st.session_state['proto_result'],
+                    None
+                )
+                st.download_button(
+                    "📦 Download ZIP",
+                    zip_data,
+                    f"{protocol.lower().replace('-', '_')}_uvm_tb.zip",
+                    mime="application/zip",
+                    use_container_width=True
+                )
         else:
             st.markdown(f"""
             <div class="placeholder">
