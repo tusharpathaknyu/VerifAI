@@ -6,12 +6,12 @@
 
 **🤖 Transform Natural Language → Production-Ready UVM Testbenches**
 
+[![CI Tests](https://github.com/tusharpathaknyu/VerifAI/actions/workflows/tests.yml/badge.svg)](https://github.com/tusharpathaknyu/VerifAI/actions/workflows/tests.yml)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg?style=flat-square&logo=python)](https://python.org)
 [![Tests](https://img.shields.io/badge/Tests-80%20Passing-success?style=flat-square&logo=pytest)](tests/)
 [![UVM 1.2](https://img.shields.io/badge/UVM-1.2%20Compatible-orange.svg?style=flat-square)](https://www.accellera.org/downloads/standards/uvm)
 [![Protocols](https://img.shields.io/badge/Protocols-5%20Supported-blue?style=flat-square)](README.md#-protocol-support)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 [![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-Cloud%20Run-4285F4?style=flat-square&logo=googlecloud)](https://verifai-761803298484.us-central1.run.app)
 
 [🌐 **Try Live Demo**](https://verifai-761803298484.us-central1.run.app) • [Features](#-features) • [Quick Start](#-quick-start) • [Examples](#-examples) • [Roadmap](#-roadmap) • [Contributing](#-contributing)

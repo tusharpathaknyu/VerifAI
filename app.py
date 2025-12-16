@@ -174,8 +174,7 @@ with st.sidebar:
     - 📊 Coverage Analysis
     - ✅ SVA Generator
     
-    [GitHub](https://github.com/tusharpathaknyu/VerifAI) | 
-    [Documentation](#)
+    [GitHub](https://github.com/tusharpathaknyu/VerifAI)
     """)
 
 # =============================================================================
@@ -342,19 +341,118 @@ with main_tab2:
     
     rtl_col1, rtl_col2 = st.columns([1, 1])
     
+    # Sample RTL for demo
+    SAMPLE_APB_RTL = '''module apb_gpio #(
+    parameter DATA_WIDTH = 32,
+    parameter ADDR_WIDTH = 8
+) (
+    // APB Interface
+    input  logic                    pclk,
+    input  logic                    preset_n,
+    input  logic                    psel,
+    input  logic                    penable,
+    input  logic                    pwrite,
+    input  logic [ADDR_WIDTH-1:0]   paddr,
+    input  logic [DATA_WIDTH-1:0]   pwdata,
+    output logic [DATA_WIDTH-1:0]   prdata,
+    output logic                    pready,
+    output logic                    pslverr,
+    
+    // GPIO Interface
+    input  logic [7:0]              gpio_in,
+    output logic [7:0]              gpio_out,
+    output logic [7:0]              gpio_oe
+);
+
+    // Register addresses
+    localparam ADDR_DATA    = 8'h00;
+    localparam ADDR_DIR     = 8'h04;
+    localparam ADDR_STATUS  = 8'h08;
+    localparam ADDR_CONTROL = 8'h0C;
+
+    // Internal registers
+    logic [7:0] data_reg;
+    logic [7:0] dir_reg;
+    logic [7:0] status_reg;
+    logic [7:0] control_reg;
+
+    // FSM for APB
+    typedef enum logic [1:0] {
+        IDLE   = 2'b00,
+        SETUP  = 2'b01,
+        ACCESS = 2'b10
+    } state_t;
+    
+    state_t state, next_state;
+
+    assign pready = (state == ACCESS);
+    assign pslverr = 1'b0;
+    assign gpio_out = data_reg;
+    assign gpio_oe = dir_reg;
+
+    always_ff @(posedge pclk or negedge preset_n) begin
+        if (!preset_n) begin
+            state <= IDLE;
+            data_reg <= 8'h0;
+            dir_reg <= 8'h0;
+            control_reg <= 8'h0;
+        end else begin
+            state <= next_state;
+            status_reg <= gpio_in;
+            
+            if (state == ACCESS && pwrite) begin
+                case (paddr)
+                    ADDR_DATA:    data_reg <= pwdata[7:0];
+                    ADDR_DIR:     dir_reg <= pwdata[7:0];
+                    ADDR_CONTROL: control_reg <= pwdata[7:0];
+                endcase
+            end
+        end
+    end
+
+    always_comb begin
+        next_state = state;
+        prdata = '0;
+        
+        case (state)
+            IDLE:   if (psel) next_state = SETUP;
+            SETUP:  if (penable) next_state = ACCESS;
+            ACCESS: next_state = IDLE;
+        endcase
+        
+        if (state == ACCESS && !pwrite) begin
+            case (paddr)
+                ADDR_DATA:    prdata = {24'b0, data_reg};
+                ADDR_DIR:     prdata = {24'b0, dir_reg};
+                ADDR_STATUS:  prdata = {24'b0, status_reg};
+                ADDR_CONTROL: prdata = {24'b0, control_reg};
+                default:      prdata = 32'hDEAD_BEEF;
+            endcase
+        end
+    end
+
+endmodule'''
+    
     with rtl_col1:
         st.subheader("📤 Upload RTL")
         
-        rtl_upload = st.file_uploader(
-            "Upload Verilog/SystemVerilog file",
-            type=['v', 'sv', 'vh', 'svh'],
-            help="Upload your DUT source file"
-        )
+        # Add sample RTL button
+        col_upload, col_sample = st.columns([2, 1])
+        with col_upload:
+            rtl_upload = st.file_uploader(
+                "Upload Verilog/SystemVerilog file",
+                type=['v', 'sv', 'vh', 'svh'],
+                help="Upload your DUT source file"
+            )
+        with col_sample:
+            if st.button("📋 Try Sample APB", help="Load sample APB GPIO controller"):
+                st.session_state['sample_rtl'] = SAMPLE_APB_RTL
         
         st.markdown("**Or paste RTL code:**")
         rtl_code = st.text_area(
             "RTL Code",
             height=300,
+            value=st.session_state.get('sample_rtl', ''),
             placeholder="""module my_apb_slave #(
     parameter DATA_WIDTH = 32
 ) (
@@ -638,32 +736,31 @@ with main_tab4:
     ### 📊 Coverage Gap Analysis
     
     **What this does:**
-    - 📈 Parses coverage reports (UCDB, UCIS, HTML)
+    - 📈 Parses coverage **text summaries** from your simulation logs
     - 🎯 Identifies uncovered bins and coverpoints
     - 🚀 **Generates UVM sequences** to hit those gaps
     
-    This is a MAJOR differentiator - ChatGPT can't analyze your actual coverage database
+    > 💡 **Tip:** Export your coverage report as text from VCS/Questa/Xcelium, 
+    > or paste the coverage summary section from your simulation log.
+    
+    This is a MAJOR differentiator - ChatGPT can't analyze your coverage data
     and suggest specific sequences to close gaps!
     """)
     
     cov_col1, cov_col2 = st.columns([1, 1])
     
     with cov_col1:
-        st.subheader("📤 Upload Coverage Report")
+        st.subheader("📤 Coverage Report Input")
         
-        cov_format = st.selectbox(
-            "Coverage Format",
-            ["UCDB (VCS/DVE)", "UCIS (Mentor)", "HTML Report", "Text Summary"],
-            help="Select the format of your coverage report"
-        )
+        st.info("📋 **Supported Format:** Text-based coverage summaries. Paste the coverage section from your simulation log or export as text.")
         
         cov_upload = st.file_uploader(
-            "Upload coverage file",
-            type=['ucdb', 'ucis', 'html', 'txt', 'log'],
-            help="Upload your coverage database or report"
+            "Upload coverage text file",
+            type=['txt', 'log', 'rpt'],
+            help="Upload a text-based coverage report or log file"
         )
         
-        st.markdown("**Or paste coverage summary:**")
+        st.markdown("**Or try the demo data below:**")
         sample_coverage = """=== Coverage Report ===
 Covergroup: cg_apb_access
   Coverpoint: cp_addr
@@ -805,22 +902,75 @@ with main_tab5:
     - 🔄 **Reset Behavior** - Known values after reset
     """)
     
+    # Sample RTL for SVA demo
+    SAMPLE_SVA_RTL = '''module axi_lite_slave (
+    input  logic        aclk,
+    input  logic        aresetn,
+    // Write Address Channel
+    input  logic        awvalid,
+    output logic        awready,
+    input  logic [31:0] awaddr,
+    // Write Data Channel
+    input  logic        wvalid,
+    output logic        wready,
+    input  logic [31:0] wdata,
+    input  logic [3:0]  wstrb,
+    // Write Response Channel
+    output logic        bvalid,
+    input  logic        bready,
+    output logic [1:0]  bresp,
+    // Read Address Channel
+    input  logic        arvalid,
+    output logic        arready,
+    input  logic [31:0] araddr,
+    // Read Data Channel
+    output logic        rvalid,
+    input  logic        rready,
+    output logic [31:0] rdata,
+    output logic [1:0]  rresp
+);
+    // Internal registers
+    logic [31:0] reg_data [0:15];
+    
+    // Write state machine
+    typedef enum logic [1:0] {
+        W_IDLE, W_ADDR, W_DATA, W_RESP
+    } w_state_t;
+    w_state_t w_state;
+    
+    // Read state machine
+    typedef enum logic [1:0] {
+        R_IDLE, R_ADDR, R_DATA
+    } r_state_t;
+    r_state_t r_state;
+
+    assign bresp = 2'b00;  // OKAY
+    assign rresp = 2'b00;  // OKAY
+
+endmodule'''
+    
     sva_col1, sva_col2 = st.columns([1, 1])
     
     with sva_col1:
         st.subheader("📤 Upload RTL for SVA Generation")
         
-        sva_rtl_upload = st.file_uploader(
-            "Upload Verilog/SystemVerilog file",
-            type=['v', 'sv', 'vh', 'svh'],
-            help="Upload your DUT to generate assertions",
-            key="sva_upload"
-        )
+        col_sva_upload, col_sva_sample = st.columns([2, 1])
+        with col_sva_upload:
+            sva_rtl_upload = st.file_uploader(
+                "Upload Verilog/SystemVerilog file",
+                type=['v', 'sv', 'vh', 'svh'],
+                help="Upload your DUT to generate assertions",
+                key="sva_upload"
+            )
+        with col_sva_sample:
+            if st.button("📋 Try Sample AXI", help="Load sample AXI-Lite slave"):
+                st.session_state['sample_sva_rtl'] = SAMPLE_SVA_RTL
         
         st.markdown("**Or paste RTL code:**")
         sva_rtl_code = st.text_area(
             "RTL Code for SVA",
             height=300,
+            value=st.session_state.get('sample_sva_rtl', ''),
             placeholder="""module apb_slave (
     input  logic        pclk,
     input  logic        preset_n,
