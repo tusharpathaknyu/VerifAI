@@ -44,7 +44,7 @@
 
 ## 🌟 Why UVMForge? (What ChatGPT Can't Do)
 
-| Feature | ChatGPT/Gemini | UVMForge |
+| Feature | ChatBots online | UVMForge |
 |---------|----------------|---------|
 | Generic UVM snippets | ✅ | ✅ |
 | **RTL-aware generation** | ❌ | ✅ **Exact port matching!** |
@@ -117,18 +117,6 @@ Upload: apb_slave.sv
 | **I2C** | ✅ Ready | Standard/Fast/Fast+/High Speed, 7/10-bit addressing, clock stretching |
 | AXI4 Full | 🔜 Coming | Burst, ID support |
 
-### 🔌 Multiple LLM Backends
-```
-┌─────────────┬────────────┬───────────────┐
-│   Provider  │    Cost    │    Quality    │
-├─────────────┼────────────┼───────────────┤
-│ Google Gemini │   Free*   │  ⭐⭐⭐⭐     │
-│ OpenAI GPT-4  │   Paid    │  ⭐⭐⭐⭐⭐   │
-│ Anthropic     │   Paid    │  ⭐⭐⭐⭐⭐   │
-│ Ollama Local  │   Free    │  ⭐⭐⭐       │
-└─────────────┴────────────┴───────────────┘
-* Free tier available
-```
 
 ### 🎯 Generated Code Quality
 - ✅ UVM 1.2 / IEEE 1800.2 compliant
